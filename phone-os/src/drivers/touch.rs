@@ -131,7 +131,7 @@ impl TouchDriver {
         let finger_id = (ptr::read_volatile(ctrl_ptr.add((TOUCH_FINGER_REG / 4) as usize)) & 0xF) as u8;
 
         // Clear the interrupt
-        ptr::write_volatile(ctrl_ptr.add((TOUCH_STATUS_REG / 4) as usize), status);
+        ptr::write_volatile(ctrl_ptr.add((TOUCH_STATUS_REG / 4) as usize) as *mut u32, status);
 
         if pressure == 0 {
             TouchEvent::Release(x, y)

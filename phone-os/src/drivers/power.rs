@@ -133,7 +133,7 @@ impl PowerManager {
         self.battery_info.level_percent = (battery_status & 0xFF) as u8;
         self.battery_info.charging = (battery_status & 0x100) != 0;
         self.battery_info.voltage_mv = (voltage & 0xFFFF) as u16;
-        self.battery_info.current_ma = ((current & 0xFFFF) as i16) - 32768; // Signed conversion
+        self.battery_info.current_ma = ((current & 0xFFFF) as i16).wrapping_sub(i16::MIN.wrapping_neg()); // Signed conversion
         self.battery_info.temperature_c = ((temp & 0xFF) as i8) - 40; // Offset conversion
         
         // Determine battery health based on temperature and voltage
