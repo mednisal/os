@@ -65,13 +65,24 @@ const DTB_MAGIC: u32 = 0xd00dfeed;
 /// This function is unsafe because it reads from arbitrary memory addresses
 pub unsafe fn parse_dtb(dtb_ptr: *const u8) -> Option<DeviceTreeInfo> {
     if dtb_ptr.is_null() {
-        return None;
+        crate::drivers::uart::println("[DTB] Warning: NULL DTB pointer, using defaults");
+        return Some(DeviceTreeInfo::new());
     }
 
     let header = &*(dtb_ptr as *const DeviceTreeHeader);
     
     if header.magic != DTB_MAGIC {
-        return None;
+        crate::drivers::uart::println("[DTB] Warning: Invalid DTB magic, using defaults");
+        // QEMU may not pass a DTB when loading a raw binary directly
+        // Return defaults instead of failing
+        let mut info = DeviceTreeInfo::new();
+        info.cpu_count = 1;
+        info.memory_regions[0] = Some(MemoryRegion {
+            base: 0x80000000,
+            size: 0x10000000,
+            region_type: MemoryType::Ram,
+        });
+        return Some(info);
     }
 
     let mut info = DeviceTreeInfo::new();
