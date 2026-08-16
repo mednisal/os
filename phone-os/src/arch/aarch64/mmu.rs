@@ -16,7 +16,7 @@ const TTBR0_ASID_SHIFT: u64 = 48;
 const TTBR0_BADDR_SHIFT: u64 = 1;
 
 /// MAIR (Memory Attribute Indirection Register) attributes
-const MAIR_DEVICE_NGnRnE: u64 = 0x00;
+const MAIR_DEVICE_NGN_RN_E: u64 = 0x00;
 const MAIR_NORMAL_WT_RA_WA: u64 = 0xAA;
 const MAIR_NORMAL_WB_RA_WA: u64 = 0xFF;
 
@@ -123,7 +123,7 @@ pub unsafe fn init_mmu(_dtb_ptr: Option<*const u8>) {
     l1_table.map_block(0x20000000, 0x20000000, device_flags);
 
     // Set up MAIR (Memory Attribute Indirection Register)
-    let mair_value = (MAIR_DEVICE_NGnRnE << (ATTR_INDEX_DEVICE * 8)) |
+    let mair_value = (MAIR_DEVICE_NGN_RN_E << (ATTR_INDEX_DEVICE * 8)) |
                      (MAIR_NORMAL_WB_RA_WA << (ATTR_INDEX_NORMAL * 8));
     
     asm!(
