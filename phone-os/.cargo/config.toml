@@ -6,6 +6,7 @@ rustflags = [
   "-C", "link-arg=-nostdlib",
   "-C", "relocation-model=static",
   "-C", "code-model=small",
+  "-C", "link-arg=-Tlink.ld",
 ]
 
 [unstable]
