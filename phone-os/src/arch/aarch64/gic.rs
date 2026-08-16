@@ -6,10 +6,14 @@
 use core::arch::asm;
 use core::ptr;
 
-/// GIC Distributor base address (typical for many ARM platforms)
-const GICD_BASE: u64 = 0x08000000;
+/// GIC Distributor base address (typical for QEMU virt)
+const GICD_BASE_DEFAULT: u64 = 0x08000000;
 /// GIC CPU Interface base address
-const GICC_BASE: u64 = 0x08010000;
+const GICC_BASE_DEFAULT: u64 = 0x08010000;
+
+/// Global GIC addresses (can be overridden for real hardware)
+static mut GICD_BASE: u64 = GICD_BASE_DEFAULT;
+static mut GICC_BASE: u64 = GICC_BASE_DEFAULT;
 
 /// Distributor registers
 const GICD_CTLR: u64 = 0x000;  // Control register
@@ -210,12 +214,30 @@ impl GicDriver {
 /// Global GIC driver instance (for use in interrupt handlers)
 static mut GIC: Option<GicDriver> = None;
 
-/// Initialize the GIC system
+/// Initialize the GIC system with default addresses
 /// 
 /// # Safety
 /// This function initializes hardware and should only be called once
 pub unsafe fn init_gic() -> GicInfo {
-    let mut gic = GicDriver::new(GICD_BASE, GICC_BASE);
+    init_gic_with_addresses(GICD_BASE_DEFAULT, GICC_BASE_DEFAULT)
+}
+
+/// Initialize the GIC system with custom addresses (for real hardware)
+/// 
+/// # Arguments
+/// * `gicd_base` - GIC Distributor base address
+/// * `gicc_base` - GIC CPU Interface base address
+/// 
+/// # Safety
+/// This function initializes hardware and should only be called once
+pub unsafe fn init_gic_with_addresses(gicd_base: u64, gicc_base: u64) -> GicInfo {
+    // Update global addresses
+    GICD_BASE = gicd_base;
+    GICC_BASE = gicc_base;
+    
+    crate::drivers::uart::println(&format!("[GIC] Initializing at D:{:#x} C:{:#x}", gicd_base, gicc_base));
+    
+    let mut gic = GicDriver::new(gicd_base, gicc_base);
     
     gic.init_distributor();
     gic.init_cpu_interface();
