@@ -42,6 +42,7 @@ pub enum InterruptType {
 pub type IrqHandler = fn(u32);
 
 /// GIC information structure
+#[derive(Debug, Clone, Copy)]
 pub struct GicInfo {
     pub spi_count: u32,
     pub cpu_count: u32,
@@ -219,9 +220,10 @@ pub unsafe fn init_gic() -> GicInfo {
     gic.init_distributor();
     gic.init_cpu_interface();
     
+    let info = gic.info.clone();
     GIC = Some(gic);
     
-    GIC.as_ref().unwrap().info
+    info
 }
 
 /// Enable interrupts globally
@@ -257,14 +259,14 @@ pub fn interrupts_enabled() -> bool {
 }
 
 /// Default interrupt handler (weak symbol can be overridden)
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn default_irq_handler(_irq: u32) {
     // Default empty handler
     // In a real implementation, this would log or handle unexpected interrupts
 }
 
 /// Exception vector table entry for IRQ
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn irq_vector_entry() {
     unsafe {
         if let Some(ref gic) = GIC {
