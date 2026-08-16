@@ -14,6 +14,7 @@ mod drivers;
 #[cfg(target_arch = "aarch64")]
 use arch::aarch64;
 use drivers::framebuffer::{Color, FramebufferWriter};
+use drivers::uart;
 
 /// Kernel entry point for ARM64
 /// 
@@ -23,6 +24,10 @@ use drivers::framebuffer::{Color, FramebufferWriter};
 pub extern "C" fn main(x0: u64) -> ! {
     #[cfg(target_arch = "aarch64")]
     {
+        // Initialize UART first for serial output
+        uart::init();
+        uart::println("[BOOT] Phone OS starting...");
+        
         // Initialize architecture-specific components
         let dtb_ptr = x0 as *const u8;
         
@@ -30,6 +35,7 @@ pub extern "C" fn main(x0: u64) -> ! {
         unsafe {
             aarch64::init(dtb_ptr);
         }
+        uart::println("[BOOT] Architecture initialized");
         
         // Initialize Framebuffer writer with address from DTB
         let mut fb = FramebufferWriter::new();
@@ -73,6 +79,9 @@ pub extern "C" fn main(x0: u64) -> ! {
         fb.set_color(Color::LIGHT_CYAN, Color::BLACK);
         let _ = write!(fb, "Phone OS kernel ready... ");
         
+        uart::println("[BOOT] Phone OS kernel ready!");
+        uart::println("[BOOT] Entering idle loop...");
+        
         loop {}
     }
     
@@ -90,6 +99,13 @@ pub extern "C" fn main(x0: u64) -> ! {
 /// Panic handler - required for no_std environments
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
+    uart::print("[PANIC] ");
+    if let Some(msg) = info.message().as_str() {
+        uart::println(msg);
+    } else {
+        uart::println("Panic occurred");
+    }
+    
     let mut fb = FramebufferWriter::new();
     fb.set_color(Color::LIGHT_RED, Color::BLACK);
     let _ = writeln!(fb, "");

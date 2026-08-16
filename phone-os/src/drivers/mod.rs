@@ -13,4 +13,7 @@ pub mod power;
 pub mod touch;
 
 #[cfg(target_arch = "aarch64")]
+pub mod uart;
+
+#[cfg(target_arch = "aarch64")]
 pub use framebuffer as vga;
