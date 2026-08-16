@@ -100,79 +100,80 @@ impl PageTable {
 /// # Safety
 /// This function modifies system registers and should only be called once
 pub unsafe fn init_mmu(_dtb_ptr: Option<*const u8>) {
-    // Create identity mapping for kernel space
-    let mut l1_table = PageTable::new();
-    
-    // Map first 1GB as normal memory (kernel code/data)
-    // Attributes: Normal, Write-Back, Read/Write, Execute allowed
-    let kernel_flags = PTE_BLOCK | PTE_AF | PTE_SH_INNER | 
-                       ((ATTR_INDEX_NORMAL & 0x7) << 2) | PTE_XN;
-    
-    for i in 0..2 {
-        let virt_addr = (i * 0x40000000u64) as u64; // 1GB blocks
-        let phys_addr = virt_addr; // Identity mapping
-        l1_table.map_block(virt_addr, phys_addr, kernel_flags);
-    }
-    
-    // Map device memory (MMIO regions)
-    let device_flags = PTE_BLOCK | PTE_AF | PTE_SH_OUTER | 
-                       ((ATTR_INDEX_DEVICE & 0x7) << 2) | PTE_XN;
-    
-    // Map typical device regions (will be refined with DT parsing)
-    l1_table.map_block(0x10000000, 0x10000000, device_flags);
-    l1_table.map_block(0x20000000, 0x20000000, device_flags);
-
-    // Set up MAIR (Memory Attribute Indirection Register)
-    let mair_value = (MAIR_DEVICE_NGN_RN_E << (ATTR_INDEX_DEVICE * 8)) |
-                     (MAIR_NORMAL_WB_RA_WA << (ATTR_INDEX_NORMAL * 8));
-    
-    asm!(
-        "msr mair_el1, {}",
-        in(reg) mair_value,
-        options(nomem, nostack)
-    );
-
-    // Set up TCR (Translation Control Register)
-    // 48-bit IPA, 4KB pages, 1-level translation
-    let tcr_value = (48u64 << 32) | // IPS: 48-bit physical address
-                    (16u64 << 16) | // TG0: 4KB granule
-                    (1u64 << 14) |  // SH0: Inner shareable
-                    (3u64 << 12) |  // ORGN0: Normal memory, Write-Back
-                    (3u64 << 10) |  // IRGN0: Normal memory, Write-Back
-                    (0u64 << 8) |   // EPD0: Use TTBR0
-                    (35u64 << 0);   // T0SZ: 48-bit address space (64-35=29 bits offset)
-    
-    asm!(
-        "msr tcr_el1, {}",
-        in(reg) tcr_value,
-        options(nomem, nostack)
-    );
-
-    // Load TTBR0_EL1 with our page table
-    let ttbr0_value = ((&l1_table as *const PageTable as u64) & !0xFFF) | 
-                      ((0u64 & 0xFFFF) << TTBR0_ASID_SHIFT);
-    
-    asm!(
-        "msr ttbr0_el1, {}",
-        in(reg) ttbr0_value,
-        options(nomem, nostack)
-    );
-
-    // Invalidate TLB
-    asm!(
-        "tlbi vmalle1is",
-        "dsb sy",
-        "isb",
-        options(nostack)
-    );
-
-    // Enable MMU
-    let sctlr_value: u64;
-    asm!(
-        "mrs {}, sctlr_el1",
-        out(reg) sctlr_value,
-        options(nomem, nostack)
-    );
+    crate::drivers::uart::println("[MMU] Skipping MMU initialization for now");
+    //     // Create identity mapping for kernel space
+    //     let mut l1_table = PageTable::new();
+    //     
+    //     // Map first 1GB as normal memory (kernel code/data)
+    //     // Attributes: Normal, Write-Back, Read/Write, Execute allowed
+    //     let kernel_flags = PTE_BLOCK | PTE_AF | PTE_SH_INNER | 
+    //                        ((ATTR_INDEX_NORMAL & 0x7) << 2) | PTE_XN;
+    //     
+    //     for i in 0..2 {
+    //         let virt_addr = (i * 0x40000000u64) as u64; // 1GB blocks
+    //         let phys_addr = virt_addr; // Identity mapping
+    //         l1_table.map_block(virt_addr, phys_addr, kernel_flags);
+    //     }
+    //     
+    //     // Map device memory (MMIO regions)
+    //     let device_flags = PTE_BLOCK | PTE_AF | PTE_SH_OUTER | 
+    //                        ((ATTR_INDEX_DEVICE & 0x7) << 2) | PTE_XN;
+    //     
+    //     // Map typical device regions (will be refined with DT parsing)
+    //     l1_table.map_block(0x10000000, 0x10000000, device_flags);
+    //     l1_table.map_block(0x20000000, 0x20000000, device_flags);
+    // 
+    //     // Set up MAIR (Memory Attribute Indirection Register)
+    //     let mair_value = (MAIR_DEVICE_NGN_RN_E << (ATTR_INDEX_DEVICE * 8)) |
+    //                      (MAIR_NORMAL_WB_RA_WA << (ATTR_INDEX_NORMAL * 8));
+    //     
+    //     asm!(
+    //         "msr mair_el1, {}",
+    //         in(reg) mair_value,
+    //         options(nomem, nostack)
+    //     );
+    // 
+    //     // Set up TCR (Translation Control Register)
+    //     // 48-bit IPA, 4KB pages, 1-level translation
+    //     let tcr_value = (48u64 << 32) | // IPS: 48-bit physical address
+    //                     (16u64 << 16) | // TG0: 4KB granule
+    //                     (1u64 << 14) |  // SH0: Inner shareable
+    //                     (3u64 << 12) |  // ORGN0: Normal memory, Write-Back
+    //                     (3u64 << 10) |  // IRGN0: Normal memory, Write-Back
+    //                     (0u64 << 8) |   // EPD0: Use TTBR0
+    //                     (35u64 << 0);   // T0SZ: 48-bit address space (64-35=29 bits offset)
+    //     
+    //     asm!(
+    //         "msr tcr_el1, {}",
+    //         in(reg) tcr_value,
+    //         options(nomem, nostack)
+    //     );
+    // 
+    //     // Load TTBR0_EL1 with our page table
+    //     let ttbr0_value = ((&l1_table as *const PageTable as u64) & !0xFFF) | 
+    //                       ((0u64 & 0xFFFF) << TTBR0_ASID_SHIFT);
+    //     
+    //     asm!(
+    //         "msr ttbr0_el1, {}",
+    //         in(reg) ttbr0_value,
+    //         options(nomem, nostack)
+    //     );
+    // 
+    //     // Invalidate TLB
+    //     asm!(
+    //         "tlbi vmalle1is",
+    //         "dsb sy",
+    //         "isb",
+    //         options(nostack)
+    //     );
+    // 
+    //     // Enable MMU
+    //     let sctlr_value: u64;
+    //     asm!(
+    //         "mrs {}, sctlr_el1",
+    //         out(reg) sctlr_value,
+    //         options(nomem, nostack)
+    //     );
     
     let sctlr_value = sctlr_value | (1 << 0) | (1 << 2) | (1 << 12); // M, C, I bits
     

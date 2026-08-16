@@ -1,10 +1,9 @@
 [package]
 name = "phone_os"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 
 [dependencies]
-toml = { version = "1.1.4", default-features = false }
 
 [profile.dev]
 panic = "abort"
@@ -12,3 +11,6 @@ panic = "abort"
 [profile.release]
 panic = "abort"
 lto = true
+strip = true
+
+[build-dependencies]
