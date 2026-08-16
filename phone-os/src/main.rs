@@ -6,44 +6,45 @@ use core::panic::PanicInfo;
 
 mod drivers;
 
-use drivers::vga::{Color, VgaWriter};
+use drivers::vga::{Color, FramebufferWriter};
 
 /// Entry point of the kernel
 #[unsafe(no_mangle)]
 pub extern "C" fn _start() -> ! {
-    // Initialize VGA writer directly on stack
-    let mut vga = VgaWriter::new();
+    // Initialize Framebuffer writer
+    let mut fb = FramebufferWriter::new();
     
     // Clear screen and set colors
-    vga.clear();
-    vga.set_color(Color::LightGreen, Color::Black);
+    fb.clear();
+    fb.set_color(Color::LightGreen, Color::Black);
     
     // Write welcome message
-    let _ = writeln!(vga, "================================");
-    let _ = writeln!(vga, "       PHONE OS BOOTING         ");
-    let _ = writeln!(vga, "================================");
-    let _ = writeln!(vga, "");
-    let _ = writeln!(vga, "VGA Text Mode Initialized!");
-    let _ = writeln!(vga, "Kernel loaded successfully.");
-    let _ = writeln!(vga, "");
+    let _ = writeln!(fb, "================================");
+    let _ = writeln!(fb, "       PHONE OS BOOTING         ");
+    let _ = writeln!(fb, "================================");
+    let _ = writeln!(fb, "");
+    let _ = writeln!(fb, "ARM64 Framebuffer Initialized!");
+    let _ = writeln!(fb, "Kernel loaded successfully.");
+    let _ = writeln!(fb, "");
     
-    vga.set_color(Color::LightGray, Color::Black);
-    let _ = writeln!(vga, "System Information:");
-    let _ = writeln!(vga, "  - Architecture: x86_64");
-    let _ = writeln!(vga, "  - Written in: Rust");
-    let _ = writeln!(vga, "  - No standard library (no_std)");
-    let _ = writeln!(vga, "");
+    fb.set_color(Color::LightGray, Color::Black);
+    let _ = writeln!(fb, "System Information:");
+    let _ = writeln!(fb, "  - Architecture: ARM64 (AArch64)");
+    let _ = writeln!(fb, "  - Written in: Rust");
+    let _ = writeln!(fb, "  - No standard library (no_std)");
+    let _ = writeln!(fb, "");
     
-    vga.set_color(Color::Yellow, Color::Black);
-    let _ = writeln!(vga, "Next steps:");
-    let _ = writeln!(vga, "  1. Implement bootloader integration");
-    let _ = writeln!(vga, "  2. Add GDT and IDT setup");
-    let _ = writeln!(vga, "  3. Implement memory management");
-    let _ = writeln!(vga, "  4. Add interrupt handling");
-    let _ = writeln!(vga, "");
+    fb.set_color(Color::Yellow, Color::Black);
+    let _ = writeln!(fb, "WARNING: This is a placeholder!");
+    let _ = writeln!(fb, "To work on real hardware you need:");
+    let _ = writeln!(fb, "  1. Device Tree parsing");
+    let _ = writeln!(fb, "  2. Framebuffer address from DTB");
+    let _ = writeln!(fb, "  3. MMU setup for memory mapping");
+    let _ = writeln!(fb, "  4. Proper bootloader (UEFI/u-boot)");
+    let _ = writeln!(fb, "");
     
-    vga.set_color(Color::LightCyan, Color::Black);
-    let _ = write!(vga, "Phone OS ready... ");
+    fb.set_color(Color::LightCyan, Color::Black);
+    let _ = write!(fb, "Phone OS ready... ");
     
     loop {}
 }
@@ -51,9 +52,9 @@ pub extern "C" fn _start() -> ! {
 /// Panic handler - required for no_std environments
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
-    let mut vga = VgaWriter::new();
-    vga.set_color(Color::LightRed, Color::Black);
-    let _ = writeln!(vga, "");
-    let _ = writeln!(vga, "PANIC: {}", info);
+    let mut fb = FramebufferWriter::new();
+    fb.set_color(Color::LightRed, Color::Black);
+    let _ = writeln!(fb, "");
+    let _ = writeln!(fb, "PANIC: {}", info);
     loop {}
 }
