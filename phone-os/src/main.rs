@@ -20,7 +20,7 @@ use drivers::framebuffer::{Color, FramebufferWriter};
 /// # Arguments
 /// * `x0` - Device Tree Blob pointer (passed by bootloader)
 #[unsafe(no_mangle)]
-pub extern "C" fn _start(x0: u64) -> ! {
+pub extern "C" fn main(x0: u64) -> ! {
     #[cfg(target_arch = "aarch64")]
     {
         // Initialize architecture-specific components
