@@ -2,15 +2,32 @@
 name = "phone_os"
 version = "0.1.0"
 edition = "2021"
+description = "Aarch64 kernel for real phone hardware (Snapdragon/MediaTek)"
+authors = ["Phone OS Team"]
 
 [dependencies]
+# No external dependencies for bare-metal
+
+# Optional: device tree parsing library (when available)
+# fdt = "0.3"
+
+[features]
+default = ["qemu"]
+qemu = []
+real_hardware = []  # Enable for real phone hardware
+pixel_6 = []        # Google Pixel 6 (Tensor GS101)
+pixel_7 = []        # Google Pixel 7 (Tensor G2)
+oneplus_9 = []      # OnePlus 9 (Snapdragon 888)
+pinephone = []      # Pine64 PinePhone (Allwinner A64)
 
 [profile.dev]
 panic = "abort"
+opt-level = "s"
 
 [profile.release]
 panic = "abort"
 lto = true
 strip = true
+opt-level = "s"
 
 [build-dependencies]
