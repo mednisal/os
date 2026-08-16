@@ -1,0 +1,17 @@
+```
+# Rust build artifacts
+target/
+
+# Cargo lock file (if not wanted in version control)
+Cargo.lock
+
+# Rust compiled binaries and object files
+**/*.o
+**/*.d
+**/CACHEDIR.TAG
+**/.cargo-artifact-lock
+**/.cargo-build-lock
+**/.cargo-lock
+**/.fingerprint/
+**/incremental/
+```
