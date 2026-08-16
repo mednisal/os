@@ -143,7 +143,7 @@ impl FramebufferWriter {
         
         let fb_ptr = self.info.addr as *mut u32;
         let offset = y * self.info.stride / BYTES_PER_PIXEL + x;
-        ptr::write_volatile(fb_ptr.add(offset), color.as_u32());
+        unsafe { ptr::write_volatile(fb_ptr.add(offset), color.as_u32()) };
     }
     
     /// Draw a character at current cursor position

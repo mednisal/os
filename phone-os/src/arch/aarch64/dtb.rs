@@ -97,7 +97,7 @@ pub unsafe fn parse_dtb(dtb_ptr: *const u8) -> Option<DeviceTreeInfo> {
 /// # Safety
 /// Requires valid DTB pointer
 pub unsafe fn get_memory_map(dtb_ptr: *const u8) -> [Option<MemoryRegion>; 16] {
-    match parse_dtb(dtb_ptr) {
+    match unsafe { parse_dtb(dtb_ptr) } {
         Some(info) => info.memory_regions,
         None => [None; 16],
     }

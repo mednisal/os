@@ -99,7 +99,7 @@ impl PageTable {
 /// 
 /// # Safety
 /// This function modifies system registers and should only be called once
-pub unsafe fn init_mmu(dtb_ptr: Option<*const u8>) {
+pub unsafe fn init_mmu(_dtb_ptr: Option<*const u8>) {
     // Create identity mapping for kernel space
     let mut l1_table = PageTable::new();
     
@@ -183,9 +183,7 @@ pub unsafe fn init_mmu(dtb_ptr: Option<*const u8>) {
     );
     
     // Instruction synchronization barrier
-    unsafe {
-        core::arch::asm!("isb", options(nomem, nostack));
-    }
+    asm!("isb", options(nomem, nostack));
 }
 
 /// Flush the TLB
