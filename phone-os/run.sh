@@ -4,8 +4,11 @@
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
-echo -e "${GREEN}Building Phone OS for AArch64...${NC}"
-cargo build --release --target aarch64-unknown-none-softfloat
+# Default feature (can be overridden by command line)
+FEATURE="${1:-qemu}"
+
+echo -e "${GREEN}Building Phone OS for AArch64 (feature: $FEATURE)...${NC}"
+cargo build --release --target aarch64-unknown-none-softfloat --features "$FEATURE"
 
 if [ $? -ne 0 ]; then
     echo "Build failed!"
@@ -41,19 +44,31 @@ if ! command -v qemu-system-aarch64 &> /dev/null; then
     exit 0
 fi
 
-# Run QEMU
-# -M virt: Emulates a generic ARM virtual machine
-# -cpu cortex-a72: Modern ARM CPU
-# -kernel: Loads our ELF directly (bypassing bootloader for now)
-# -nographic: Routes serial output to terminal
-# -append: Kernel command line arguments
-qemu-system-aarch64 \
-    -M virt \
-    -cpu cortex-a72 \
-    -kernel "$KERNEL_BIN" \
-    -nographic \
-    -serial mon:stdio \
-    -d int,cpu_reset \
-    -D qemu.log
-
-echo -e "${GREEN}Emulation finished. Check qemu.log for details.${NC}"
+# Run QEMU with appropriate settings based on feature
+if [ "$FEATURE" = "qemu" ]; then
+    # QEMU virt machine with graphical output for UI
+    qemu-system-aarch64 \
+        -M virt,highmem=on \
+        -cpu cortex-a72 \
+        -m 1G \
+        -kernel "$KERNEL_BIN" \
+        -serial mon:stdio \
+        -device virtio-gpu-pci \
+        -vga virtio \
+        -d int,cpu_reset \
+        -D qemu.log
+    
+    echo -e "${GREEN}Emulation finished. Check qemu.log for details.${NC}"
+else
+    # For real hardware features, use nographic mode
+    qemu-system-aarch64 \
+        -M virt \
+        -cpu cortex-a72 \
+        -kernel "$KERNEL_BIN" \
+        -nographic \
+        -serial mon:stdio \
+        -d int,cpu_reset \
+        -D qemu.log
+    
+    echo -e "${GREEN}Emulation finished. Check qemu.log for details.${NC}"
+fi

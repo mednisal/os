@@ -1,7 +1,10 @@
-//! Device-specific configurations for real phone hardware
+//! Device-specific configurations for real phone hardware and QEMU
 //! 
 //! This module contains hardware configurations for various phone platforms.
 //! Each device has specific memory maps, peripheral addresses, and initialization sequences.
+
+#[cfg(feature = "qemu")]
+pub mod qemu;
 
 #[cfg(feature = "pinephone")]
 pub mod pinephone;
@@ -60,6 +63,9 @@ pub trait DeviceConfig {
 /// Get the current device configuration using feature flags
 #[inline]
 pub fn get_device_config() -> Option<&'static str> {
+    #[cfg(feature = "qemu")]
+    return Some("qemu");
+    
     #[cfg(feature = "pinephone")]
     return Some("pinephone");
     
@@ -69,12 +75,17 @@ pub fn get_device_config() -> Option<&'static str> {
     #[cfg(feature = "oneplus_9")]
     return Some("oneplus_9");
     
-    #[cfg(not(any(feature = "pinephone", feature = "pixel_6", feature = "oneplus_9")))]
+    #[cfg(not(any(feature = "qemu", feature = "pinephone", feature = "pixel_6", feature = "oneplus_9")))]
     return None;
 }
 
 /// Initialize device-specific hardware based on feature flag
 pub unsafe fn init_device() {
+    #[cfg(feature = "qemu")]
+    {
+        qemu::init_qemu();
+    }
+    
     #[cfg(feature = "pinephone")]
     {
         pinephone::init_pinephone();
@@ -93,6 +104,9 @@ pub unsafe fn init_device() {
 
 /// Get device-specific UART base address
 pub fn get_uart_base() -> Option<u64> {
+    #[cfg(feature = "qemu")]
+    return Some(qemu::QemuVirtConfig::UART_BASE);
+    
     #[cfg(feature = "pinephone")]
     return Some(pinephone::PinePhoneConfig::UART_BASE);
     
@@ -102,12 +116,15 @@ pub fn get_uart_base() -> Option<u64> {
     #[cfg(feature = "oneplus_9")]
     return Some(oneplus9::OnePlus9Config::UART_BASE);
     
-    #[cfg(not(any(feature = "pinephone", feature = "pixel_6", feature = "oneplus_9")))]
+    #[cfg(not(any(feature = "qemu", feature = "pinephone", feature = "pixel_6", feature = "oneplus_9")))]
     return None;
 }
 
 /// Get device-specific GIC addresses
 pub fn get_gic_addresses() -> Option<(u64, u64)> {
+    #[cfg(feature = "qemu")]
+    return Some((qemu::QemuVirtConfig::GICD_BASE, qemu::QemuVirtConfig::GICC_BASE));
+    
     #[cfg(feature = "pinephone")]
     return Some((pinephone::PinePhoneConfig::GICD_BASE, pinephone::PinePhoneConfig::GICC_BASE));
     
@@ -117,12 +134,15 @@ pub fn get_gic_addresses() -> Option<(u64, u64)> {
     #[cfg(feature = "oneplus_9")]
     return Some((oneplus9::OnePlus9Config::GICD_BASE, oneplus9::OnePlus9Config::GICC_BASE));
     
-    #[cfg(not(any(feature = "pinephone", feature = "pixel_6", feature = "oneplus_9")))]
+    #[cfg(not(any(feature = "qemu", feature = "pinephone", feature = "pixel_6", feature = "oneplus_9")))]
     return None;
 }
 
 /// Get device name string
 pub fn get_device_name() -> &'static str {
+    #[cfg(feature = "qemu")]
+    return qemu::QemuVirtConfig::NAME;
+    
     #[cfg(feature = "pinephone")]
     return pinephone::PinePhoneConfig::NAME;
     
@@ -132,12 +152,15 @@ pub fn get_device_name() -> &'static str {
     #[cfg(feature = "oneplus_9")]
     return oneplus9::OnePlus9Config::NAME;
     
-    #[cfg(not(any(feature = "pinephone", feature = "pixel_6", feature = "oneplus_9")))]
+    #[cfg(not(any(feature = "qemu", feature = "pinephone", feature = "pixel_6", feature = "oneplus_9")))]
     return "Unknown Device";
 }
 
 /// Get SoC name string
 pub fn get_soc_name() -> &'static str {
+    #[cfg(feature = "qemu")]
+    return qemu::QemuVirtConfig::SOC;
+    
     #[cfg(feature = "pinephone")]
     return pinephone::PinePhoneConfig::SOC;
     
@@ -147,6 +170,6 @@ pub fn get_soc_name() -> &'static str {
     #[cfg(feature = "oneplus_9")]
     return oneplus9::OnePlus9Config::SOC;
     
-    #[cfg(not(any(feature = "pinephone", feature = "pixel_6", feature = "oneplus_9")))]
+    #[cfg(not(any(feature = "qemu", feature = "pinephone", feature = "pixel_6", feature = "oneplus_9")))]
     return "Unknown SoC";
 }
