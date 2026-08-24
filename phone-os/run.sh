@@ -47,6 +47,7 @@ fi
 # Run QEMU with appropriate settings based on feature
 if [ "$FEATURE" = "qemu" ]; then
     # QEMU virt machine with graphical output for UI
+    # Using VNC display for headless environments - connect with: vncviewer :1
     qemu-system-aarch64 \
         -M virt,highmem=on \
         -cpu cortex-a72 \
@@ -54,11 +55,12 @@ if [ "$FEATURE" = "qemu" ]; then
         -kernel "$KERNEL_BIN" \
         -serial mon:stdio \
         -device virtio-gpu-pci \
-        -vga virtio \
+        -vnc :1 \
         -d int,cpu_reset \
         -D qemu.log
     
     echo -e "${GREEN}Emulation finished. Check qemu.log for details.${NC}"
+    echo "To view the display, connect with: vncviewer :1"
 else
     # For real hardware features, use nographic mode
     qemu-system-aarch64 \

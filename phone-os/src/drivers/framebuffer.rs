@@ -7,11 +7,28 @@
 use core::fmt::{self, Write};
 use core::ptr;
 
-/// Default framebuffer address (placeholder - should come from DTB)
+/// Default framebuffer address for QEMU PL110 CLCD
+#[cfg(feature = "qemu")]
+const DEFAULT_FRAMEBUFFER_ADDR: u64 = 0x40000000;
+
+/// Default framebuffer address for real hardware (placeholder - should come from DTB)
+#[cfg(not(feature = "qemu"))]
 const DEFAULT_FRAMEBUFFER_ADDR: u64 = 0xE0000000;
-/// Default screen width
+
+/// Default screen width for QEMU
+#[cfg(feature = "qemu")]
+const DEFAULT_WIDTH: usize = 1024;
+
+/// Default screen width for real hardware
+#[cfg(not(feature = "qemu"))]
 const DEFAULT_WIDTH: usize = 1080;
-/// Default screen height
+
+/// Default screen height for QEMU
+#[cfg(feature = "qemu")]
+const DEFAULT_HEIGHT: usize = 768;
+
+/// Default screen height for real hardware
+#[cfg(not(feature = "qemu"))]
 const DEFAULT_HEIGHT: usize = 1920;
 /// Bytes per pixel (RGB888)
 const BYTES_PER_PIXEL: usize = 4;
