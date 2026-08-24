@@ -688,7 +688,7 @@ impl Checkbox {
         self.label_color = label;
     }
 
-    pub fn set_on_toggle(&mut self, callback: fn(bool)) {
+    pub fn set_on_toggle(&mut self, callback: Option<fn(bool)>) {
         self.on_toggle = callback;
     }
 

@@ -184,3 +184,29 @@ pub fn write_fmt(args: core::fmt::Arguments) {
         let _ = (*(&raw mut UART)).write_fmt(args);
     }
 }
+
+/// Write a u32 value as decimal to UART
+pub fn print_u32(val: u32) {
+    if val == 0 {
+        print("0");
+        return;
+    }
+    
+    let mut buffer = [0u8; 10]; // Max 10 digits for u32
+    let mut idx = 0;
+    let mut n = val;
+    
+    while n > 0 {
+        buffer[idx] = b'0' + (n % 10) as u8;
+        n /= 10;
+        idx += 1;
+    }
+    
+    // Print in reverse order
+    for i in 0..idx {
+        let byte = buffer[idx - 1 - i];
+        unsafe {
+            (*(&raw mut UART)).write_byte(byte);
+        }
+    }
+}

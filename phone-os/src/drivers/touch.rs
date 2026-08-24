@@ -213,7 +213,21 @@ pub fn poll_touch() -> TouchEvent {
     }
 }
 
+/// Read touch event - convenience function for main loop
+pub fn read_touch_event() -> Option<TouchEvent> {
+    let event = poll_touch();
+    match event {
+        TouchEvent::None => None,
+        _ => Some(event),
+    }
+}
+
 /// Check if touch is available
 pub fn touch_available() -> bool {
     TOUCH_AVAILABLE.load(Ordering::Acquire)
+}
+
+/// Initialize touch with default address
+pub unsafe fn init_default() -> bool {
+    init_touch(TOUCH_CTRL_BASE)
 }

@@ -10,11 +10,19 @@ mod arch {
 }
 
 mod drivers;
+mod kernel;
 
 #[cfg(target_arch = "aarch64")]
 use arch::aarch64;
 use drivers::framebuffer::{Color, FramebufferWriter};
 use drivers::uart;
+use drivers::power::PowerManager;
+use drivers::touch::TouchEvent;
+use kernel::memory::GlobalAllocator;
+
+/// Set up the global allocator for heap allocations
+#[global_allocator]
+static GLOBAL: GlobalAllocator = GlobalAllocator;
 
 /// Kernel entry point for ARM64
 /// 
@@ -36,6 +44,19 @@ pub extern "C" fn main(x0: u64) -> ! {
             aarch64::init(dtb_ptr);
         }
         uart::println("[BOOT] Architecture initialized");
+        
+        // Initialize heap allocator (CRITICAL: enables Box, Vec, String, etc.)
+        unsafe {
+            kernel::memory::init_heap(0x90000000, 16 * 1024 * 1024); // 16MB heap
+        }
+        uart::println("[BOOT] Heap allocator initialized");
+        
+        // Initialize Power Manager with default PMU base
+        let mut power_mgr = PowerManager::new(drivers::power::PMU_BASE);
+        unsafe {
+            power_mgr.init();
+        }
+        uart::println("[BOOT] Power manager initialized");
         
         // Initialize Framebuffer writer with address from DTB
         let mut fb = FramebufferWriter::new();
@@ -66,23 +87,100 @@ pub extern "C" fn main(x0: u64) -> ! {
             let _ = writeln!(fb, "  - CPUs detected: {}", cpu_count);
         }
         
+        // Show battery status
+        if let Some(battery) = power_mgr.get_battery_level() {
+            let _ = writeln!(fb, "  - Battery: {}%", battery);
+        }
+        
         let _ = writeln!(fb, "");
         
         fb.set_color(Color::YELLOW, Color::BLACK);
-        let _ = writeln!(fb, "Next steps for real hardware:");
-        let _ = writeln!(fb, "  1. Integrate UEFI/u-boot bootloader");
-        let _ = writeln!(fb, "  2. Add full DTB node parsing");
-        let _ = writeln!(fb, "  3. Implement interrupt handling");
-        let _ = writeln!(fb, "  4. Add driver support (display, touch, etc.)");
+        let _ = writeln!(fb, "System Status:");
+        let _ = writeln!(fb, "  ✓ Heap allocator enabled");
+        let _ = writeln!(fb, "  ✓ Power manager active");
+        let _ = writeln!(fb, "  ✓ Event loop running");
+        let _ = writeln!(fb, "  ⚠ Interrupt handling (TODO)");
         let _ = writeln!(fb, "");
         
         fb.set_color(Color::LIGHT_CYAN, Color::BLACK);
-        let _ = write!(fb, "Phone OS kernel ready... ");
+        let _ = writeln!(fb, "Phone OS kernel ready!");
+        let _ = writeln!(fb, "");
+        let _ = writeln!(fb, "Touch the screen to test input...");
         
         uart::println("[BOOT] Phone OS kernel ready!");
-        uart::println("[BOOT] Entering idle loop...");
+        uart::println("[BOOT] Starting event loop...");
         
-        loop {}
+        // Main event loop - processes touch events and updates UI
+        let mut last_touch_time = 0u64;
+        let mut touch_count = 0u32;
+        
+        loop {
+            // Check for touch events (polling - would be interrupt-driven in production)
+            if let Some(touch_event) = drivers::touch::read_touch_event() {
+                match touch_event {
+                    TouchEvent::Press(x, y) => {
+                        touch_count += 1;
+                        last_touch_time = aarch64::get_timer_value();
+                        
+                        uart::println("[TOUCH] Press at (");
+                        // Simple UART output for coordinates
+                        crate::drivers::uart::print_u32(x as u32);
+                        crate::drivers::uart::print(", ");
+                        crate::drivers::uart::print_u32(y as u32);
+                        crate::drivers::uart::println(")");
+                        
+                        // Update display with touch feedback
+                        fb.set_color(Color::LIGHT_BLUE, Color::BLACK);
+                        let _ = writeln!(fb, "");
+                        let _ = writeln!(fb, "Touch #{} detected at ({}, {})", touch_count, x, y);
+                        
+                        // Show current battery level
+                        if let Some(battery) = power_mgr.get_battery_level() {
+                            let _ = writeln!(fb, "Battery: {}%", battery);
+                        }
+                        
+                        // Adjust CPU frequency based on load (simple demo)
+                        if touch_count % 5 == 0 {
+                            unsafe { power_mgr.set_performance_mode(true); }
+                            fb.set_color(Color::LIGHT_GREEN, Color::BLACK);
+                            let _ = writeln!(fb, "Performance mode: ON");
+                        } else {
+                            unsafe { power_mgr.set_performance_mode(false); }
+                            fb.set_color(Color::LIGHT_CYAN, Color::BLACK);
+                            let _ = writeln!(fb, "Performance mode: ECO");
+                        }
+                    }
+                    TouchEvent::Release(x, y) => {
+                        uart::println("[TOUCH] Release at (");
+                        crate::drivers::uart::print_u32(x as u32);
+                        crate::drivers::uart::print(", ");
+                        crate::drivers::uart::print_u32(y as u32);
+                        crate::drivers::uart::println(")");
+                    }
+                    TouchEvent::Move(x, y) => {
+                        // Optional: track movement
+                        let _ = (x, y);
+                    }
+                    TouchEvent::MultiTouch(id, x, y) => {
+                        // Multi-touch event (unused for now)
+                        let _ = (id, x, y);
+                    }
+                    TouchEvent::None => {
+                        // No touch event
+                    }
+                }
+            }
+            
+            // Idle power management - reduce CPU frequency when idle
+            if aarch64::get_timer_value() - last_touch_time > 1000000 {
+                unsafe { power_mgr.set_performance_mode(false); }
+            }
+            
+            // Small delay to prevent busy-waiting (would use WFI instruction in production)
+            for _ in 0..1000 {
+                core::hint::spin_loop();
+            }
+        }
     }
     
     #[cfg(not(target_arch = "aarch64"))]

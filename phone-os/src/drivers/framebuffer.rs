@@ -227,7 +227,7 @@ impl FramebufferWriter {
     /// 
     /// # Safety
     /// Must ensure coordinates are within bounds
-    pub unsafe fn draw_pixel(&mut self, x: usize, y: usize, color: Color) {
+    pub unsafe fn draw_pixel_pub(&mut self, x: usize, y: usize, color: Color) {
         if x >= self.info.width || y >= self.info.height {
             return;
         }
@@ -349,9 +349,15 @@ impl FramebufferWriter {
     /// * `radius` - Circle radius
     /// * `color` - Fill color
     pub fn fill_circle(&mut self, cx: usize, cy: usize, radius: usize, color: Color) {
+        // Use integer-only algorithm to avoid sqrt
         let r2 = radius * radius;
         for dy in 0..=radius {
-            let dx_limit = ((r2 - dy * dy) as f32).sqrt() as usize;
+            let dy2 = dy * dy;
+            // Integer square root approximation
+            let mut dx_limit = 0;
+            while dx_limit <= radius && (dx_limit + 1) * (dx_limit + 1) <= r2 - dy2 {
+                dx_limit += 1;
+            }
             for dx in 0..=dx_limit {
                 unsafe {
                     self.draw_pixel(cx + dx, cy + dy, color);
