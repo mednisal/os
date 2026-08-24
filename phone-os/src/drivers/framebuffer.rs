@@ -79,7 +79,7 @@ impl FramebufferInfo {
     }
 }
 
-/// Framebuffer writer for text output
+/// Framebuffer writer for text output and graphics primitives
 pub struct FramebufferWriter {
     info: FramebufferInfo,
     cursor_x: usize,
@@ -206,6 +206,161 @@ impl FramebufferWriter {
         }
         
         self.cursor_y -= 1;
+    }
+
+    /// Get framebuffer width
+    pub fn width(&self) -> usize {
+        self.info.width
+    }
+
+    /// Get framebuffer height
+    pub fn height(&self) -> usize {
+        self.info.height
+    }
+
+    /// Draw a single pixel at specified coordinates
+    /// 
+    /// # Arguments
+    /// * `x` - X coordinate in pixels
+    /// * `y` - Y coordinate in pixels
+    /// * `color` - Color to draw
+    /// 
+    /// # Safety
+    /// Must ensure coordinates are within bounds
+    pub unsafe fn draw_pixel(&mut self, x: usize, y: usize, color: Color) {
+        if x >= self.info.width || y >= self.info.height {
+            return;
+        }
+        
+        let fb_ptr = self.info.addr as *mut u32;
+        let offset = y * self.info.stride / BYTES_PER_PIXEL + x;
+        ptr::write_volatile(fb_ptr.add(offset), color.as_u32());
+    }
+
+    /// Draw a horizontal line
+    /// 
+    /// # Arguments
+    /// * `x0` - Starting X coordinate
+    /// * `y` - Y coordinate
+    /// * `length` - Length of the line
+    /// * `color` - Color to draw
+    pub fn draw_hline(&mut self, x0: usize, y: usize, length: usize, color: Color) {
+        unsafe {
+            for x in x0..(x0 + length) {
+                if x < self.info.width && y < self.info.height {
+                    self.draw_pixel(x, y, color);
+                }
+            }
+        }
+    }
+
+    /// Draw a vertical line
+    /// 
+    /// # Arguments
+    /// * `x` - X coordinate
+    /// * `y0` - Starting Y coordinate
+    /// * `length` - Length of the line
+    /// * `color` - Color to draw
+    pub fn draw_vline(&mut self, x: usize, y0: usize, length: usize, color: Color) {
+        unsafe {
+            for y in y0..(y0 + length) {
+                if x < self.info.width && y < self.info.height {
+                    self.draw_pixel(x, y, color);
+                }
+            }
+        }
+    }
+
+    /// Draw a rectangle outline
+    /// 
+    /// # Arguments
+    /// * `x` - Top-left X coordinate
+    /// * `y` - Top-left Y coordinate
+    /// * `width` - Rectangle width
+    /// * `height` - Rectangle height
+    /// * `color` - Color to draw
+    pub fn draw_rect(&mut self, x: usize, y: usize, width: usize, height: usize, color: Color) {
+        self.draw_hline(x, y, width, color);
+        self.draw_hline(x, y + height - 1, width, color);
+        self.draw_vline(x, y, height, color);
+        self.draw_vline(x + width - 1, y, height, color);
+    }
+
+    /// Fill a rectangle with a solid color
+    /// 
+    /// # Arguments
+    /// * `x` - Top-left X coordinate
+    /// * `y` - Top-left Y coordinate
+    /// * `width` - Rectangle width
+    /// * `height` - Rectangle height
+    /// * `color` - Fill color
+    pub fn fill_rect(&mut self, x: usize, y: usize, width: usize, height: usize, color: Color) {
+        unsafe {
+            for dy in 0..height {
+                for dx in 0..width {
+                    let px = x + dx;
+                    let py = y + dy;
+                    if px < self.info.width && py < self.info.height {
+                        self.draw_pixel(px, py, color);
+                    }
+                }
+            }
+        }
+    }
+
+    /// Draw a circle using Bresenham's algorithm
+    /// 
+    /// # Arguments
+    /// * `cx` - Center X coordinate
+    /// * `cy` - Center Y coordinate
+    /// * `radius` - Circle radius
+    /// * `color` - Color to draw
+    pub fn draw_circle(&mut self, cx: usize, cy: usize, radius: usize, color: Color) {
+        let mut x = radius;
+        let mut y = 0;
+        let mut err = 0i32;
+        
+        while x >= y {
+            unsafe {
+                self.draw_pixel(cx + x, cy + y, color);
+                self.draw_pixel(cx + y, cy + x, color);
+                self.draw_pixel(cx - y, cy + x, color);
+                self.draw_pixel(cx - x, cy + y, color);
+                self.draw_pixel(cx - x, cy - y, color);
+                self.draw_pixel(cx - y, cy - x, color);
+                self.draw_pixel(cx + y, cy - x, color);
+                self.draw_pixel(cx + x, cy - y, color);
+            }
+            
+            y += 1;
+            err += 1 + 2 * y as i32;
+            if 2 * (err - x as i32) + 1 > 0 {
+                x -= 1;
+                err += 1 - 2 * x as i32;
+            }
+        }
+    }
+
+    /// Fill a circle
+    /// 
+    /// # Arguments
+    /// * `cx` - Center X coordinate
+    /// * `cy` - Center Y coordinate
+    /// * `radius` - Circle radius
+    /// * `color` - Fill color
+    pub fn fill_circle(&mut self, cx: usize, cy: usize, radius: usize, color: Color) {
+        let r2 = radius * radius;
+        for dy in 0..=radius {
+            let dx_limit = ((r2 - dy * dy) as f32).sqrt() as usize;
+            for dx in 0..=dx_limit {
+                unsafe {
+                    self.draw_pixel(cx + dx, cy + dy, color);
+                    self.draw_pixel(cx - dx, cy + dy, color);
+                    self.draw_pixel(cx + dx, cy - dy, color);
+                    self.draw_pixel(cx - dx, cy - dy, color);
+                }
+            }
+        }
     }
 }
 
