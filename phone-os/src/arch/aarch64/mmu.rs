@@ -168,12 +168,22 @@ pub unsafe fn init_mmu(_dtb_ptr: Option<*const u8>) {
     //     );
     // 
     //     // Enable MMU
-    //     let sctlr_value: u64;
+    //     let mut sctlr_value: u64;
     //     asm!(
     //         "mrs {}, sctlr_el1",
     //         out(reg) sctlr_value,
     //         options(nomem, nostack)
     //     );
+    
+    // Read current SCTLR value and enable MMU, cache, and instruction cache
+    let mut sctlr_value: u64;
+    unsafe {
+        asm!(
+            "mrs {}, sctlr_el1",
+            out(reg) sctlr_value,
+            options(nomem, nostack)
+        );
+    }
     
     let sctlr_value = sctlr_value | (1 << 0) | (1 << 2) | (1 << 12); // M, C, I bits
     

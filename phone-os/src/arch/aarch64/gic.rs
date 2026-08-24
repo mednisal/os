@@ -235,7 +235,10 @@ pub unsafe fn init_gic_with_addresses(gicd_base: u64, gicc_base: u64) -> GicInfo
     GICD_BASE = gicd_base;
     GICC_BASE = gicc_base;
     
-    crate::drivers::uart::println(&format!("[GIC] Initializing at D:{:#x} C:{:#x}", gicd_base, gicc_base));
+    crate::drivers::uart::println("[GIC] Initializing at D:");
+    print_hex(gicd_base);
+    crate::drivers::uart::println(" C:");
+    print_hex(gicc_base);
     
     let mut gic = GicDriver::new(gicd_base, gicc_base);
     
@@ -246,6 +249,19 @@ pub unsafe fn init_gic_with_addresses(gicd_base: u64, gicc_base: u64) -> GicInfo
     GIC = Some(gic);
     
     info
+}
+
+/// Print a hex number to UART (simple implementation)
+fn print_hex(val: u64) {
+    const HEX_CHARS: &[u8; 16] = b"0123456789ABCDEF";
+    let mut buf = [0u8; 18]; // "0x" + 16 hex digits
+    buf[0] = b'0';
+    buf[1] = b'x';
+    for i in 0..16 {
+        let shift = (15 - i) * 4;
+        buf[2 + i] = HEX_CHARS[((val >> shift) & 0xF) as usize];
+    }
+    crate::drivers::uart::print(core::str::from_utf8(&buf).unwrap_or(""));
 }
 
 /// Enable interrupts globally

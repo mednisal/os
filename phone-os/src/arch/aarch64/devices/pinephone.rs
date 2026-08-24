@@ -82,7 +82,7 @@ pub unsafe fn init_pinephone() {
     ptr::write_volatile(uart_clk_reg, 0x80000000); // Enable gate
     
     // Configure UART0: 115200 8N1
-    let uart_base = Self::UART_BASE as *mut u32;
+    let uart_base = PinePhoneConfig::UART_BASE as *mut u32;
     
     // Disable FIFO and clear FIFOs
     ptr::write_volatile(uart_base.add(0x08 / 4), 0x07); // FCR

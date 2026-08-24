@@ -24,25 +24,26 @@ pub unsafe fn init(dtb_ptr: *const u8) {
     // Check for device-specific configuration first
     #[cfg(any(feature = "pinephone", feature = "pixel_6", feature = "oneplus_9"))]
     {
-        if let Some(device) = devices::get_device_config() {
-            crate::drivers::uart::println(&format!("[INIT] Detected: {}", device.NAME));
-            crate::drivers::uart::println(&format!("[INIT] SoC: {}", device.SOC));
+        if let Some(_device_name) = devices::get_device_config() {
+            let dev_name = devices::get_device_name();
+            let soc_name = devices::get_soc_name();
+            crate::drivers::uart::println("[INIT] Detected: ");
+            crate::drivers::uart::println(dev_name);
+            crate::drivers::uart::println("[INIT] SoC: ");
+            crate::drivers::uart::println(soc_name);
             
             // Device-specific initialization
-            #[cfg(feature = "pinephone")]
-            devices::pinephone::init_pinephone();
-            
-            #[cfg(feature = "pixel_6")]
-            devices::pixel6::init_pixel6();
-            
-            #[cfg(feature = "oneplus_9")]
-            devices::oneplus9::init_oneplus9();
+            devices::init_device();
             
             // Reconfigure GIC with device-specific addresses
-            gic::init_gic_with_addresses(device.GICD_BASE, device.GICC_BASE);
+            if let Some((gicd, gicc)) = devices::get_gic_addresses() {
+                gic::init_gic_with_addresses(gicd, gicc);
+            }
             
             // Configure UART with device-specific address
-            uart::init_with_base(device.UART_BASE);
+            if let Some(uart_base) = devices::get_uart_base() {
+                crate::drivers::uart::init_with_base(uart_base);
+            }
         } else {
             // Fall back to generic initialization
             init_generic(dtb_ptr);

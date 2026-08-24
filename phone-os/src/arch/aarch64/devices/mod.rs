@@ -12,7 +12,7 @@ pub mod pixel6;
 #[cfg(feature = "oneplus_9")]
 pub mod oneplus9;
 
-/// Trait for device-specific hardware configuration
+/// Trait for device-specific hardware configuration (methods only, not dyn-compatible)
 pub trait DeviceConfig {
     /// Device name
     const NAME: &'static str;
@@ -57,18 +57,96 @@ pub trait DeviceConfig {
     const MMIO_REGIONS: &'static [(u64, u64)];
 }
 
-/// Get the current device configuration
+/// Get the current device configuration using feature flags
 #[inline]
-pub fn get_device_config() -> Option<&'static dyn DeviceConfig> {
+pub fn get_device_config() -> Option<&'static str> {
     #[cfg(feature = "pinephone")]
-    return Some(&pinephone::PinePhoneConfig);
+    return Some("pinephone");
     
     #[cfg(feature = "pixel_6")]
-    return Some(&pixel6::Pixel6Config);
+    return Some("pixel_6");
     
     #[cfg(feature = "oneplus_9")]
-    return Some(&oneplus9::OnePlus9Config);
+    return Some("oneplus_9");
     
     #[cfg(not(any(feature = "pinephone", feature = "pixel_6", feature = "oneplus_9")))]
     return None;
+}
+
+/// Initialize device-specific hardware based on feature flag
+pub unsafe fn init_device() {
+    #[cfg(feature = "pinephone")]
+    {
+        pinephone::init_pinephone();
+    }
+    
+    #[cfg(feature = "pixel_6")]
+    {
+        pixel6::init_pixel6();
+    }
+    
+    #[cfg(feature = "oneplus_9")]
+    {
+        oneplus9::init_oneplus9();
+    }
+}
+
+/// Get device-specific UART base address
+pub fn get_uart_base() -> Option<u64> {
+    #[cfg(feature = "pinephone")]
+    return Some(pinephone::PinePhoneConfig::UART_BASE);
+    
+    #[cfg(feature = "pixel_6")]
+    return Some(pixel6::Pixel6Config::UART_BASE);
+    
+    #[cfg(feature = "oneplus_9")]
+    return Some(oneplus9::OnePlus9Config::UART_BASE);
+    
+    #[cfg(not(any(feature = "pinephone", feature = "pixel_6", feature = "oneplus_9")))]
+    return None;
+}
+
+/// Get device-specific GIC addresses
+pub fn get_gic_addresses() -> Option<(u64, u64)> {
+    #[cfg(feature = "pinephone")]
+    return Some((pinephone::PinePhoneConfig::GICD_BASE, pinephone::PinePhoneConfig::GICC_BASE));
+    
+    #[cfg(feature = "pixel_6")]
+    return Some((pixel6::Pixel6Config::GICD_BASE, pixel6::Pixel6Config::GICC_BASE));
+    
+    #[cfg(feature = "oneplus_9")]
+    return Some((oneplus9::OnePlus9Config::GICD_BASE, oneplus9::OnePlus9Config::GICC_BASE));
+    
+    #[cfg(not(any(feature = "pinephone", feature = "pixel_6", feature = "oneplus_9")))]
+    return None;
+}
+
+/// Get device name string
+pub fn get_device_name() -> &'static str {
+    #[cfg(feature = "pinephone")]
+    return pinephone::PinePhoneConfig::NAME;
+    
+    #[cfg(feature = "pixel_6")]
+    return pixel6::Pixel6Config::NAME;
+    
+    #[cfg(feature = "oneplus_9")]
+    return oneplus9::OnePlus9Config::NAME;
+    
+    #[cfg(not(any(feature = "pinephone", feature = "pixel_6", feature = "oneplus_9")))]
+    return "Unknown Device";
+}
+
+/// Get SoC name string
+pub fn get_soc_name() -> &'static str {
+    #[cfg(feature = "pinephone")]
+    return pinephone::PinePhoneConfig::SOC;
+    
+    #[cfg(feature = "pixel_6")]
+    return pixel6::Pixel6Config::SOC;
+    
+    #[cfg(feature = "oneplus_9")]
+    return oneplus9::OnePlus9Config::SOC;
+    
+    #[cfg(not(any(feature = "pinephone", feature = "pixel_6", feature = "oneplus_9")))]
+    return "Unknown SoC";
 }
