@@ -60,7 +60,7 @@ pub enum CpuPerfState {
 }
 
 /// Power Management Unit register addresses (placeholder)
-const PMU_BASE: u64 = 0x20000000;
+pub const PMU_BASE: u64 = 0x20000000;
 const PMU_CTRL_REG: u64 = 0x00;
 const PMU_STATUS_REG: u64 = 0x04;
 const PMU_BATTERY_REG: u64 = 0x08;
@@ -157,9 +157,27 @@ impl PowerManager {
         &self.battery_info
     }
 
+    /// Get battery level percentage (0-100)
+    pub fn get_battery_level(&self) -> Option<u8> {
+        if BATTERY_PRESENT.load(Ordering::Acquire) {
+            Some(self.battery_info.level_percent)
+        } else {
+            None
+        }
+    }
+
     /// Check if battery is present
     pub fn battery_present(&self) -> bool {
         BATTERY_PRESENT.load(Ordering::Acquire)
+    }
+
+    /// Set CPU performance mode
+    pub unsafe fn set_performance_mode(&mut self, high_perf: bool) {
+        if high_perf {
+            self.set_cpu_performance(CpuPerfState::Performance);
+        } else {
+            self.set_cpu_performance(CpuPerfState::Powersave);
+        }
     }
 
     /// Get current power state
@@ -248,6 +266,11 @@ impl PowerManager {
 /// Global power manager instance
 static mut POWER_MANAGER: Option<PowerManager> = None;
 
+/// Initialize the global power manager with default PMU base
+pub unsafe fn init_default() -> bool {
+    init_power(PMU_BASE)
+}
+
 /// Initialize the global power manager
 /// 
 /// # Arguments
@@ -270,12 +293,16 @@ pub unsafe fn init_power(pmu_base: u64) -> bool {
 }
 
 /// Get battery level percentage
-pub fn get_battery_level() -> u8 {
+pub fn get_battery_level() -> Option<u8> {
     unsafe {
         if let Some(ref pm) = POWER_MANAGER {
-            pm.get_battery_info().level_percent
+            if pm.battery_present() {
+                Some(pm.get_battery_info().level_percent)
+            } else {
+                Some(LAST_BATTERY_LEVEL.load(Ordering::Acquire) as u8)
+            }
         } else {
-            LAST_BATTERY_LEVEL.load(Ordering::Acquire) as u8
+            None
         }
     }
 }

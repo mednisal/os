@@ -10,8 +10,20 @@ pub use dtb::*;
 pub use gic::*;
 pub use mmu::*;
 
+use core::sync::atomic::{AtomicU64, Ordering};
+
 /// Architecture name
 pub const ARCH_NAME: &str = "aarch64";
+
+/// Simple timer value counter (increments on each read for demo purposes)
+static TIMER_VALUE: AtomicU64 = AtomicU64::new(0);
+
+/// Get current timer value (in a real impl, would read hardware timer)
+pub fn get_timer_value() -> u64 {
+    // In production: read CNTPCT_EL0 system register
+    // For now, just increment a counter
+    TIMER_VALUE.fetch_add(1, Ordering::Relaxed)
+}
 
 /// Initialize architecture-specific components
 /// 
