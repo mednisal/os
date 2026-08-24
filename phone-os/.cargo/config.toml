@@ -7,6 +7,7 @@ rustflags = [
   "-C", "relocation-model=static",
   "-C", "code-model=small",
   "-C", "link-arg=-Tlink.ld",
+  "-C", "link-arg=--gc-sections",
 ]
 
 # Real hardware targets with device-specific configurations

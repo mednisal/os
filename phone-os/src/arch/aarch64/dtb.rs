@@ -3,8 +3,6 @@
 //! This module provides basic Device Tree Blob (DTB) parsing functionality
 //! to discover hardware configuration on ARM platforms.
 
-use core::ptr;
-
 /// Device Tree header structure
 #[repr(C)]
 pub struct DeviceTreeHeader {

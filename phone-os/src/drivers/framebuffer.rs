@@ -147,7 +147,7 @@ impl FramebufferWriter {
     }
     
     /// Draw a character at current cursor position
-    fn draw_char(&mut self, c: char) {
+    fn draw_char(&mut self, _c: char) {
         // Simple block character rendering (in real impl, use font bitmap)
         let start_x = self.cursor_x * self.char_width;
         let start_y = self.cursor_y * self.char_height;
@@ -180,11 +180,11 @@ impl FramebufferWriter {
     fn scroll(&mut self) {
         unsafe {
             let fb_ptr = self.info.addr as *mut u32;
-            let line_size = self.info.stride / BYTES_PER_PIXEL;
-            let screen_size = self.info.width * self.info.height;
+            let _line_size = self.info.stride / BYTES_PER_PIXEL;
+            let _screen_size = self.info.width * self.info.height;
             
             // Move all lines up by one character height
-            let pixels_to_scroll = (self.info.height - self.char_height) * self.info.width;
+            let _pixels_to_scroll = (self.info.height - self.char_height) * self.info.width;
             
             for y in 0..(self.info.height - self.char_height) {
                 for x in 0..self.info.width {
@@ -407,7 +407,7 @@ impl Write for FramebufferWriter {
 /// 
 /// # Safety
 /// Requires valid DTB pointer
-pub unsafe fn init_framebuffer_from_dtb(dtb_ptr: *const u8) -> FramebufferInfo {
+pub unsafe fn init_framebuffer_from_dtb(_dtb_ptr: *const u8) -> FramebufferInfo {
     // In a real implementation, parse the DTB to find framebuffer node
     // For now, return defaults
     FramebufferInfo::new()

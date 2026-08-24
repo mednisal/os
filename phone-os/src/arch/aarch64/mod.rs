@@ -5,11 +5,6 @@ pub mod dtb;
 pub mod gic;
 pub mod mmu;
 
-pub use devices::*;
-pub use dtb::*;
-pub use gic::*;
-pub use mmu::*;
-
 use core::sync::atomic::{AtomicU64, Ordering};
 
 /// Architecture name
