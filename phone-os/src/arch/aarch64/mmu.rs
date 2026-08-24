@@ -4,7 +4,6 @@
 //! for ARM64 architecture.
 
 use core::arch::asm;
-use core::ptr;
 
 /// Page size (4KB)
 pub const PAGE_SIZE: usize = 4096;

@@ -326,7 +326,7 @@ impl Widget for Panel {
         self.rect
     }
 
-    fn draw(&self, fb: &mut FramebufferWriter, _font: &FontRenderer) {
+    fn draw(&self, _fb: &mut FramebufferWriter, _font: &FontRenderer) {
         if !self.visible {
             return;
         }
@@ -526,7 +526,7 @@ impl Widget for Slider {
         self.rect
     }
 
-    fn draw(&self, fb: &mut FramebufferWriter, _font: &FontRenderer) {
+    fn draw(&self, _fb: &mut FramebufferWriter, _font: &FontRenderer) {
         if !self.visible {
             return;
         }
@@ -597,13 +597,13 @@ impl Widget for Slider {
                     return true;
                 }
             }
-            TouchEvent::Move(x, y) | TouchEvent::MultiTouch(_, x, y) => {
+            TouchEvent::Move(x, _y) | TouchEvent::MultiTouch(_, x, _y) => {
                 if self.is_dragging && self.rect.contains(x as usize, self.rect.y + self.rect.height / 2) {
                     self.update_value_from_x(x as usize);
                     return true;
                 }
             }
-            TouchEvent::Release(x, y) => {
+            TouchEvent::Release(_x, _y) => {
                 if self.is_dragging {
                     self.is_dragging = false;
                     return true;
@@ -858,7 +858,7 @@ impl Widget for ProgressBar {
         self.rect
     }
 
-    fn draw(&self, fb: &mut FramebufferWriter, _font: &FontRenderer) {
+    fn draw(&self, _fb: &mut FramebufferWriter, _font: &FontRenderer) {
         if !self.visible {
             return;
         }

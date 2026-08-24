@@ -4,7 +4,6 @@
 //! including font parsing, glyph rasterization, and text layout.
 
 use crate::drivers::framebuffer::{Color, FramebufferWriter};
-use core::fmt::Write;
 
 /// Maximum supported font size
 const MAX_FONT_SIZE: usize = 72;
@@ -336,7 +335,7 @@ impl FontRenderer {
     }
 
     /// Internal pixel drawing helper
-    unsafe fn draw_pixel_at(&self, fb: &mut FramebufferWriter, x: usize, y: usize, color: Color) {
+    unsafe fn draw_pixel_at(&self, _fb: &mut FramebufferWriter, x: usize, y: usize, color: Color) {
         // Access framebuffer info through public interface
         // This is a placeholder - actual implementation would need direct framebuffer access
         use core::ptr;

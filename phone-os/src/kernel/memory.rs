@@ -67,7 +67,7 @@ pub unsafe fn allocate(size: usize, align: usize) -> *mut u8 {
             Ordering::Acquire,
         ) {
             Ok(_) => {
-                return (aligned_start as *mut u8);
+                return aligned_start as *mut u8;
             }
             Err(val) => {
                 current = val; // Retry with updated value
