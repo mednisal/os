@@ -16,4 +16,13 @@ pub mod touch;
 pub mod uart;
 
 #[cfg(target_arch = "aarch64")]
+pub mod font;
+
+#[cfg(target_arch = "aarch64")]
+pub mod ui;
+
+#[cfg(target_arch = "aarch64")]
+pub mod ui_demo;
+
+#[cfg(target_arch = "aarch64")]
 pub use framebuffer as vga;

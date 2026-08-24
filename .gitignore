@@ -1,18 +1,17 @@
-```
+```rust
 # Compiled and build artifacts
-*.bin
 *.o
 *.obj
-*.out
-build/
+*.a
+*.lib
+*.so
+*.dll
+*.exe
 target/
 
 # Dependencies
-**/node_modules/
-**/.venv/
-**/venv/
-**/.cargo/
-**/Cargo.lock
+Cargo.lock
+vendor/
 
 # Logs and temp files
 *.log
@@ -22,6 +21,12 @@ target/
 # Editors
 .vscode/
 .idea/
+*.swp
+*.swo
+
+# OS specific
+.DS_Store
+Thumbs.db
 
 # Coverage
 coverage/
@@ -29,6 +34,7 @@ htmlcov/
 .coverage
 
 # Rust specific
-**/target/
-Cargo.lock
+**/rlib
+**/*.rmeta
+debug.log
 ```
