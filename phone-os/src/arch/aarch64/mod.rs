@@ -1,9 +1,11 @@
 //! ARM64 architecture-specific code
 
+pub mod devices;
 pub mod dtb;
 pub mod gic;
 pub mod mmu;
 
+pub use devices::*;
 pub use dtb::*;
 pub use gic::*;
 pub use mmu::*;
@@ -19,6 +21,43 @@ pub const ARCH_NAME: &str = "aarch64";
 /// # Safety
 /// This function performs low-level hardware initialization
 pub unsafe fn init(dtb_ptr: *const u8) {
+    // Check for device-specific configuration first
+    #[cfg(any(feature = "pinephone", feature = "pixel_6", feature = "oneplus_9"))]
+    {
+        if let Some(_device_name) = devices::get_device_config() {
+            let dev_name = devices::get_device_name();
+            let soc_name = devices::get_soc_name();
+            crate::drivers::uart::println("[INIT] Detected: ");
+            crate::drivers::uart::println(dev_name);
+            crate::drivers::uart::println("[INIT] SoC: ");
+            crate::drivers::uart::println(soc_name);
+            
+            // Device-specific initialization
+            devices::init_device();
+            
+            // Reconfigure GIC with device-specific addresses
+            if let Some((gicd, gicc)) = devices::get_gic_addresses() {
+                gic::init_gic_with_addresses(gicd, gicc);
+            }
+            
+            // Configure UART with device-specific address
+            if let Some(uart_base) = devices::get_uart_base() {
+                crate::drivers::uart::init_with_base(uart_base);
+            }
+        } else {
+            // Fall back to generic initialization
+            init_generic(dtb_ptr);
+        }
+    }
+    
+    #[cfg(not(any(feature = "pinephone", feature = "pixel_6", feature = "oneplus_9")))]
+    {
+        init_generic(dtb_ptr);
+    }
+}
+
+/// Generic initialization for QEMU or unknown hardware
+unsafe fn init_generic(dtb_ptr: *const u8) {
     // Parse device tree
     if let Some(dt_info) = unsafe { dtb::parse_dtb(dtb_ptr) } {
         // Log CPU count (in real implementation, would use serial output)

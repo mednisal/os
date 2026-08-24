@@ -1,29 +1,34 @@
 ```
-# Rust/Cargo specific
-Cargo.lock
-target/
-**/*.rs.bk
-
-# Build artifacts
+# Compiled and build artifacts
 *.bin
 *.o
 *.obj
+*.out
 build/
+target/
 
 # Dependencies
-vendor/
+**/node_modules/
+**/.venv/
+**/venv/
+**/.cargo/
+**/Cargo.lock
 
 # Logs and temp files
 *.log
 *.tmp
-
-# Environment
-.env
-.env.local
-*.env.*
+*.swp
 
 # Editors
 .vscode/
 .idea/
-*.swp
+
+# Coverage
+coverage/
+htmlcov/
+.coverage
+
+# Rust specific
+**/target/
+Cargo.lock
 ```
