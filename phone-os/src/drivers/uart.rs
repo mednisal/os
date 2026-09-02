@@ -1,10 +1,10 @@
-//! PL011 UART Driver for AArch64 QEMU 'virt' machine and real hardware
+//! PL011 UART Driver for AArch64 Renode virt machine and real hardware
 //! 
 //! This driver supports configurable base addresses for different hardware platforms.
 
 use core::ptr::{read_volatile, write_volatile};
 
-// Default base address for PL011 UART on QEMU virt machine
+// Default base address for PL011 UART on Renode virt machine
 const UART_BASE_DEFAULT: usize = 0x9000000;
 
 // Register offsets (PL011 standard)

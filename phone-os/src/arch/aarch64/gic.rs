@@ -6,10 +6,10 @@
 use core::arch::asm;
 use core::ptr;
 
-/// GIC Distributor base address (typical for QEMU virt)
-const GICD_BASE_DEFAULT: u64 = 0x08000000;
+/// GIC Distributor base address (Renode virt machine)
+const GICD_BASE_DEFAULT: u64 = 0x8000000;
 /// GIC CPU Interface base address
-const GICC_BASE_DEFAULT: u64 = 0x08010000;
+const GICC_BASE_DEFAULT: u64 = 0x8001000;
 
 /// Global GIC addresses (can be overridden for real hardware)
 static mut GICD_BASE: u64 = GICD_BASE_DEFAULT;

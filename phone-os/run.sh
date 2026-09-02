@@ -4,11 +4,8 @@
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
-# Default feature (can be overridden by command line)
-FEATURE="${1:-qemu}"
-
-echo -e "${GREEN}Building Phone OS for AArch64 (feature: $FEATURE)...${NC}"
-cargo build --release --target aarch64-unknown-none-softfloat --features "$FEATURE"
+echo -e "${GREEN}Building Phone OS for AArch64...${NC}"
+cargo build --release --target aarch64-unknown-none-softfloat
 
 if [ $? -ne 0 ]; then
     echo "Build failed!"
@@ -24,53 +21,32 @@ if [ ! -f "$KERNEL_BIN" ]; then
     exit 1
 fi
 
-echo -e "${GREEN}Starting QEMU with Virt board emulation...${NC}"
-echo "Press Ctrl+A then X to exit QEMU."
+echo -e "${GREEN}Starting Renode emulation...${NC}"
+echo "Press Ctrl+] to exit Renode."
 
-# Check if QEMU is installed
-if ! command -v qemu-system-aarch64 &> /dev/null; then
+# Check if Renode is installed
+if ! command -v renode &> /dev/null; then
     echo ""
-    echo "ERROR: qemu-system-aarch64 is not installed!"
+    echo "ERROR: renode is not installed!"
     echo ""
-    echo "To install QEMU:"
-    echo "  Ubuntu/Debian: sudo apt install qemu-system-arm"
-    echo "  Fedora: sudo dnf install qemu-system-arm"
-    echo "  macOS: brew install qemu"
+    echo "To install Renode:"
+    echo "  Ubuntu/Debian: Follow instructions at https://renode.io/"
+    echo "  Fedora: Follow instructions at https://renode.io/"
+    echo "  macOS: brew install renode"
     echo ""
     echo "Kernel binary built successfully at: $KERNEL_BIN"
     echo "Size: $(ls -lh $KERNEL_BIN | awk '{print $5}')"
     echo ""
-    echo "You can test it on real hardware or install QEMU for emulation."
+    echo "You can test it on real hardware or install Renode for emulation."
     exit 0
 fi
 
-# Run QEMU with appropriate settings based on feature
-if [ "$FEATURE" = "qemu" ]; then
-    # QEMU virt machine with graphical output for UI
-    # Using VNC display for headless environments - connect with: vncviewer :1
-    qemu-system-aarch64 \
-        -M virt,highmem=on \
-        -cpu cortex-a72 \
-        -m 1G \
-        -kernel "$KERNEL_BIN" \
-        -serial mon:stdio \
-        -device virtio-gpu-pci \
-        -vnc :1 \
-        -d int,cpu_reset \
-        -D qemu.log
-    
-    echo -e "${GREEN}Emulation finished. Check qemu.log for details.${NC}"
-    echo "To view the display, connect with: vncviewer :1"
-else
-    # For real hardware features, use nographic mode
-    qemu-system-aarch64 \
-        -M virt \
-        -cpu cortex-a72 \
-        -kernel "$KERNEL_BIN" \
-        -nographic \
-        -serial mon:stdio \
-        -d int,cpu_reset \
-        -D qemu.log
-    
-    echo -e "${GREEN}Emulation finished. Check qemu.log for details.${NC}"
-fi
+# Run Renode with our platform definition
+renode <<EOF
+include @renode/platform.repl
+sysbus LoadELF $KERNEL_BIN
+machine Start
+analyze uart
+EOF
+
+echo -e "${GREEN}Emulation finished.${NC}"

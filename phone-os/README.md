@@ -70,17 +70,45 @@ cargo build --release
 cargo build --target x86_64-unknown-none --release
 ```
 
-## Running with QEMU
+## Running with Renode
 
 ```bash
-# Run ARM64 version (requires proper bootloader)
-qemu-system-aarch64 -M virt -cpu cortex-a57 -kernel target/aarch64-unknown-none-softfloat/release/phone_os
+# Run using the run script (recommended)
+./run.sh
 
-# With serial output
-qemu-system-aarch64 -M virt -cpu cortex-a57 -kernel target/aarch64-unknown-none-softfloat/release/phone_os -serial stdio
+# Or manually with Renode
+renode renode/platform.repl
+sysbus LoadELF target/aarch64-unknown-none-softfloat/release/phone_os
+machine Start
+analyze uart
+```
 
-# Run x86_64 version
-qemu-system-x86_64 -kernel target/x86_64-unknown-none/debug/phone_os
+### Prerequisites for Renode
+
+1. **Install Renode**:
+   ```bash
+   # Ubuntu/Debian
+   wget https://github.com/renode/renode/releases/download/v1.14.0/renode_1.14.0_amd64.deb
+   sudo dpkg -i renode_1.14.0_amd64.deb
+   
+   # macOS
+   brew install renode
+   
+   # Or follow instructions at https://renode.io/
+   ```
+
+2. **Rust toolchain** with nightly features:
+   ```bash
+   rustup install nightly
+   rustup default nightly
+   rustup target add aarch64-unknown-none-softfloat
+   ```
+
+### Build Commands
+
+```bash
+# Build for ARM64 (mobile devices and Renode)
+cargo build --release
 ```
 
 ## Important Notes
@@ -102,7 +130,7 @@ Currently **no real hardware is supported**. This is an educational/experimental
 - **PinePhone** - Open hardware with mainline Linux support
 - **Librem 5** - Privacy-focused with open documentation
 - **Raspberry Pi** - Great for learning ARM development
-- **QEMU virt machine** - Best for initial development and testing
+- **Renode virt machine** - Best for initial development and testing
 
 ## Roadmap
 
@@ -151,7 +179,7 @@ Currently **no real hardware is supported**. This is an educational/experimental
 
 ### Target Architecture
 - **Primary**: ARM64 (aarch64) for mobile devices
-- **Development**: QEMU virt machine for testing
+- **Development**: Renode virt machine for testing
 
 ### Design Principles
 1. **Microkernel-inspired**: Keep the kernel minimal

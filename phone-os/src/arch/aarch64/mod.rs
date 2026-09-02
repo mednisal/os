@@ -23,7 +23,7 @@ pub fn get_timer_value() -> u64 {
 /// Initialize architecture-specific components
 /// 
 /// # Arguments
-/// * `dtb_ptr` - Pointer to device tree blob passed by bootloader
+/// * `dtb_ptr` - Pointer to device tree blob passed by bootloader (null for Renode)
 /// 
 /// # Safety
 /// This function performs low-level hardware initialization
@@ -63,12 +63,17 @@ pub unsafe fn init(dtb_ptr: *const u8) {
     }
 }
 
-/// Generic initialization for QEMU or unknown hardware
+/// Generic initialization for Renode or unknown hardware
 unsafe fn init_generic(dtb_ptr: *const u8) {
-    // Parse device tree
-    if let Some(dt_info) = unsafe { dtb::parse_dtb(dtb_ptr) } {
-        // Log CPU count (in real implementation, would use serial output)
-        let _cpu_count = dt_info.cpu_count;
+    // For Renode, dtb_ptr is null, so skip DTB parsing
+    if !dtb_ptr.is_null() {
+        // Parse device tree
+        if let Some(dt_info) = unsafe { dtb::parse_dtb(dtb_ptr) } {
+            // Log CPU count (in real implementation, would use serial output)
+            let _cpu_count = dt_info.cpu_count;
+        }
+    } else {
+        crate::drivers::uart::println("[INIT] Renode detected - using hardcoded addresses");
     }
     
     // Initialize MMU with identity mapping
