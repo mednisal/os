@@ -1,0 +1,37 @@
+// Renode platform definition for Phone OS
+// Maps hardware to match our driver expectations
+
+cpu: CPU.CortexA72 @ sysbus
+    cpuType: "cortex-a72"
+    flashSize: 0x1000000
+
+sysbus:
+    // UART0 - PL011 at 0x9000000 (matches our driver)
+    uart: Serial.UART_PL011 @ sysbus 0x9000000
+        -> interruptController@1
+
+    // GICv2 Interrupt Controller
+    interruptController: IRQControllers.GICv2 @ sysbus 0x8000000
+        -> cpu[0]
+
+    // Framebuffer - simple linear buffer at 0x50000000
+    framebuffer: Miscellaneous.Framebuffer @ sysbus 0x50000000
+        size: 0x800000  // 8MB
+        width: 1080
+        height: 2400
+        bitsPerPixel: 32
+
+    // RAM
+    memory: Memory.MappedMemory @ sysbus 0x40000000
+        size: 0x10000000  // 256MB
+
+mac: Network.MACSimulator @ sysbus
+    -> switch
+
+switch: Network.Switch
+
+// Machine configuration
+machines:
+    machine: 
+        peripherals: sysbus
+        cpu: cpu

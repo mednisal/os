@@ -7,29 +7,14 @@
 use core::fmt::{self, Write};
 use core::ptr;
 
-/// Default framebuffer address for QEMU PL110 CLCD
-#[cfg(feature = "qemu")]
-const DEFAULT_FRAMEBUFFER_ADDR: u64 = 0x40000000;
+/// Default framebuffer address for Renode virt machine
+const DEFAULT_FRAMEBUFFER_ADDR: u64 = 0x50000000;
 
-/// Default framebuffer address for real hardware (placeholder - should come from DTB)
-#[cfg(not(feature = "qemu"))]
-const DEFAULT_FRAMEBUFFER_ADDR: u64 = 0xE0000000;
-
-/// Default screen width for QEMU
-#[cfg(feature = "qemu")]
-const DEFAULT_WIDTH: usize = 1024;
-
-/// Default screen width for real hardware
-#[cfg(not(feature = "qemu"))]
+/// Default screen width for Renode
 const DEFAULT_WIDTH: usize = 1080;
 
-/// Default screen height for QEMU
-#[cfg(feature = "qemu")]
-const DEFAULT_HEIGHT: usize = 768;
-
-/// Default screen height for real hardware
-#[cfg(not(feature = "qemu"))]
-const DEFAULT_HEIGHT: usize = 1920;
+/// Default screen height for Renode
+const DEFAULT_HEIGHT: usize = 2400;
 /// Bytes per pixel (RGB888)
 const BYTES_PER_PIXEL: usize = 4;
 
